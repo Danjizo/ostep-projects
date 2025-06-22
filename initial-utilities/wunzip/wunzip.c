@@ -1,47 +1,71 @@
+#include <endian.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-struct encoded_unit {
-  unsigned int count;
-  char c;
+union u16_bytes_u {
+  uint16_t number;
+  uint8_t bytes[sizeof(uint16_t)];
 };
 
+union u32_bytes_u {
+  uint32_t number;
+  uint8_t bytes[sizeof(uint32_t)];
+};
+
+bool is_little_endian(void) {
+  union u16_bytes_u x = {.number = 0x2B1A};
+  return x.bytes[0] == 0x1A ? true : false;
+}
+
 int main(int argc, char *argv[]) {
+
   if (argc < 2) {
     fprintf(stdout, "wunzip: file1 [file2 ...]\n");
     exit(EXIT_FAILURE);
   }
 
-  struct encoded_unit encoded_unit = {0, 0};
-  int files_left = argc - 1, file_idx = 1;
+  union u32_bytes_u count;
+  uint8_t c, buffer[5] = {0};
+  size_t bytes_read = 0;
+  FILE *fp = NULL;
+  bool little_endian = is_little_endian();
 
-  // Open the first file
-  FILE *fp = fopen(argv[file_idx++], "r");
-  if (!fp) {
-    printf("wunzip: cannot open file\n");
-    exit(EXIT_FAILURE);
-  }
-  files_left--;
+  for (int file_idx = 1; file_idx < argc; file_idx++) {
+    // Open file
+    fp = fopen(argv[file_idx], "r");
+    if (!fp) {
+      printf("wunzip: cannot open file\n");
+      exit(EXIT_FAILURE);
+    }
 
-  while (!feof(fp) || files_left > 0) {
-    // Catch a possible EOF: open the next file
-    if (feof(fp)) {
-      if (fp) // Close the previous file (if any)
-        fclose(fp);
-      fp = fopen(argv[file_idx++], "r");
-      if (!fp) {
-        printf("wunzip: cannot open file\n");
-        exit(EXIT_FAILURE);
+    // Read file
+    while ((bytes_read = fread(&buffer, sizeof(buffer), 1, fp)) > 0) {
+      // Extract the char
+      c = buffer[4];
+
+      // Extract the count
+      if (little_endian) {
+        count.bytes[0] = buffer[0];
+        count.bytes[1] = buffer[1];
+        count.bytes[2] = buffer[2];
+        count.bytes[3] = buffer[3];
+      } else {
+        count.bytes[0] = buffer[3];
+        count.bytes[1] = buffer[2];
+        count.bytes[2] = buffer[1];
+        count.bytes[3] = buffer[0];
       }
-      files_left--;
-    }
-    fread(&encoded_unit, sizeof(struct encoded_unit), 1, fp);
-    for (unsigned int i = 0; i < encoded_unit.count; i++) {
-      fprintf(stdout, "%c", encoded_unit.c);
-    }
-  };
 
-  fclose(fp); // Close last file opened
+      // Write chars
+      while (count.number-- > 0)
+        fputc(c, stdout);
+    }
+
+    // Close file
+    fclose(fp);
+  }
 
   exit(EXIT_SUCCESS);
 }
