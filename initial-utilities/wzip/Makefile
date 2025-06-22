@@ -16,5 +16,8 @@ build: $(OBJS)
 %.o: %.c
 	$(CC) $(ERRFLAGS) -c  $< -o $@
 
+test: build
+	./test-wzip.sh
+
 clean:
 	rm -f $(TARG) $(OBJS)
