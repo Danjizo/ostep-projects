@@ -1,6 +1,8 @@
 
 # Projects for an Operating Systems Class
 
+> **NOTE**: This is a fork of the original [OSTEP projects repo](https://github.com/remzi-arpacidusseau/ostep-projects/).
+
 This repository holds a number of projects that can be used in an operating
 systems class aimed at upper-level undergraduates and (in some cases)
 beginning graduate students. They are based on years of teaching such a course
