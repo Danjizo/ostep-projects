@@ -16,7 +16,7 @@ union u32_bytes_u {
 
 bool is_little_endian(void) {
   union u16_bytes_u x = {.number = 0x2B1A};
-  return x.bytes[0] == 0x1A ? true : false;
+  return x.bytes[0] == 0x1A;
 }
 
 int main(int argc, char *argv[]) {
