@@ -45,6 +45,8 @@ int main(int argc, char *argv[]) {
       // Extract the char
       c = buffer[4];
 
+      // We assume the count was encoded as little endian
+      // (following our convention set in wzip)
       // Extract the count
       if (little_endian) {
         count.bytes[0] = buffer[0];
